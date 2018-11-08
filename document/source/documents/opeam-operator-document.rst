@@ -293,6 +293,9 @@ claimAttributesに取得方法を追記し、scopeClaimsMapにprofileスコー�
 
 編集が終わったら、右下の「Save」を押下します。
 
+プログラムの使用法
+==================
+
 プログラムの配置
 ----------------
 
@@ -303,9 +306,6 @@ claimAttributesに取得方法を追記し、scopeClaimsMapにprofileスコー�
 
 特にありません。
 
-プログラムの使用法
-==================
-
 コマンドライン
 --------------
 
@@ -313,7 +313,7 @@ claimAttributesに取得方法を追記し、scopeClaimsMapにprofileスコー�
 
 ::
 
-    $ python openam-operator.py u-tokyo.mintsys.jp utadmin001 <パスワード>
+    $ python openam_operator.py u-tokyo.mintsys.jp utadmin001 <パスワード>
 
 と実行します。
 失敗した場合（パスワードが違う、ユーザーIDが違うなど）は以下のようになります。また実行結果として１が返ります。
