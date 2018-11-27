@@ -1,3 +1,6 @@
+# 概要
+MIシステムのシングルサインオンシステムをシェルやpythonから使うためのライブラリ。
+
 ## プログラムの配置
 適当な場所で、「 git clone ssh://git@gitlab.mintsys.jp:50022/midev/authentication-operator.git 」を実行して、プログラムを取り出します。
 
