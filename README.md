@@ -33,10 +33,10 @@ from openam_operator import *
 ```
 
 * 実行
-miauth(server, username, password)
-server : u-tokyo.mintsys.jpのような文字列。
-username : utadmin001のような文字列
-password : パスワード
+miauth(server, username, password)  
+server : u-tokyo.mintsys.jpのような文字列。  
+username : utadmin001のような文字列  
+password : パスワード  
 
 * python2.7での実行結果。
 
