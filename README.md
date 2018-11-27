@@ -1,5 +1,5 @@
 ## プログラムの配置
-適当な場所で、「git clone ssh://git@gitlab.mintsys.jp:50022/midev/authentication-operator.git」を実行して、プログラムを取り出します。
+適当な場所で、「 git clone ssh://git@gitlab.mintsys.jp:50022/midev/authentication-operator.git 」を実行して、プログラムを取り出します。
 
 ## 必要なライブラリ
 特にありません。
@@ -19,8 +19,8 @@ Faild(Unauthorized)
 ```
 成功すれば、
 ```
-ID <mi-user-id>
-Token <mi-api-token>
+ID <500000100000001>
+Token <13bedfd69583faa62be240fcbcd0c0c0b542bc92e1352070f150f8a309f441ed>
 ```
 となります。
 
