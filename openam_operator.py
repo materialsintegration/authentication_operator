@@ -4,6 +4,9 @@
 '''
 OpenAM認証用ライブラリ
 '''
+__author__ = "Yusuke Manaka"
+__version__ = "1.0.0"
+__date__ = "20181122"
 
 import sys, os
 import time
