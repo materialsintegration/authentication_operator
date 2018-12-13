@@ -1,0 +1,2 @@
+#graft openam_operator
+#global-exclude *.py[co]
