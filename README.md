@@ -41,8 +41,8 @@ pythonのライブラリとしての実行も想定しています。
 from openam_operator import openam_operator
 ```
 
-* 実行
-openam_operator.miauth(server, username, password)  
+* 実行  
+openam_operator.miauth(server, username, password)   
 server : u-tokyo.mintsys.jpのような文字列。  
 username : utadmin001のような文字列  
 password : パスワード  
@@ -50,17 +50,17 @@ password : パスワード
 * python2.7での実行結果。
 
 ```python
->>> miauth("ut-remote.mintsys.jp", "utadmin001", "間違ったパスワード")
+>>> opename_operator.miauth("ut-remote.mintsys.jp", "utadmin001", "間違ったパスワード")
 (False, <Response [401]>, None)
->>> miauth("ut-remote.mintsys.jp", "utadmin001", "正しいパスワード")
+>>> opename_operator.miauth("ut-remote.mintsys.jp", "utadmin001", "正しいパスワード")
 (True, u'500000100000001', u'13bedfd69583faa62be240fcbcd0c0c0b542bc92e1352070f150f8a309f441ed')
 ```
 * python3.xでの実行結果。
 
 ```python
->>> miauth("ut-remote.mintsys.jp", "utadmin001", "間違ったパスワード")
+>>> opename_operator.miauth("ut-remote.mintsys.jp", "utadmin001", "間違ったパスワード")
 (False, <Response [401]>, None)
->>> miauth("ut-remote.mintsys.jp", "utadmin001", "正しいパスワード")
+>>> opename_operator.miauth("ut-remote.mintsys.jp", "utadmin001", "正しいパスワード")
 (True, '500000100000001', '13bedfd69583faa62be240fcbcd0c0c0b542bc92e1352070f150f8a309f441ed')
 ```
 
