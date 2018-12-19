@@ -2,7 +2,13 @@
 MIシステムのシングルサインオンシステムをシェルやpythonから使うためのライブラリ。
 
 ## プログラムの配置
-適当な場所で、「 git clone ssh://git@gitlab.mintsys.jp:50022/midev/authentication-operator.git 」を実行して、プログラムを取り出します。
+適当な場所で、「 git clone ssh://git@gitlab.mintsys.jp:50022/midev/authentication-operator.git 」を実行して、プログラムを取り出し、管理者権限でpipコマンドでインストールします。
+
+```bash
+$ su
+# cd dist
+# pip install openam_operator-x.x.x-py2.py3-none-any.whl
+```
 
 ## 必要なライブラリ
 特にありません。
@@ -13,7 +19,7 @@ MIシステムのシングルサインオンシステムをシェルやpythonか
 シェルスクリプトなどでの使用を想定しています。
 
 ```
-$ python openam-operator.py u-tokyo.mintsys.jp utadmin001 <パスワード>
+$ python -m openam-operator.openam_operator u-tokyo.mintsys.jp utadmin001 <パスワード>
 ```
 と実行します。
 失敗した場合（パスワードが違う、ユーザーIDが違うなど）は以下のようになります。また実行結果として１が返ります。
@@ -32,11 +38,11 @@ pythonのライブラリとしての実行も想定しています。
 
 * インポート
 ```python
-from openam_operator import *
+from openam_operator import openam_operator
 ```
 
 * 実行
-miauth(server, username, password)  
+openam_operator.miauth(server, username, password)  
 server : u-tokyo.mintsys.jpのような文字列。  
 username : utadmin001のような文字列  
 password : パスワード  
