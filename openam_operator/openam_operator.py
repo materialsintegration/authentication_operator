@@ -18,6 +18,7 @@ import requests
 import urllib
 import subprocess
 import base64
+from getpass import getpass
 if sys.version_info[0] <= 2:
     import ConfigParser
     from urlparse import urlparse
@@ -320,7 +321,7 @@ def miLogin(hostname, message=None):
         name = input("ログインID: ")
     password = getpass("パスワード: ")
 
-    ret, uid, token = openam_operator.miauth(hostname, name, password)
+    ret, uid, token = miauth(hostname, name, password)
     if ret is False:
         if uid.status_code == 401:
             print(uid.json()["message"])
