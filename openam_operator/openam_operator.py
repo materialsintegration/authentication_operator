@@ -301,6 +301,33 @@ def miauth(server, user_name, user_passwd, debug=0):
     else:
         return False, result, None
 
+def miLogin(hostname, message=None):
+    '''
+    ログイン
+    @param hostname (string) dev-u-tokyo.mintsys.jpなどのサイト名
+    @param message (string) ログインの前に表示するメッセージ。無い場合は"<hostname>へのログイン"が表示される。
+    @retval userid, tokenのタプルが返る。ログインに失敗した場合None, Noneのタプルが返る。
+    '''
+
+    #print("記述子を登録する側のログイン情報入力")
+    if message is None:
+        print("%s へのログイン"%hostname)
+    else:
+        print(message)
+    if sys.version_info[0] <= 2:
+        name = raw_input("ログインID: ")
+    else:
+        name = input("ログインID: ")
+    password = getpass("パスワード: ")
+
+    ret, uid, token = openam_operator.miauth(hostname, name, password)
+    if ret is False:
+        if uid.status_code == 401:
+            print(uid.json()["message"])
+        return None, None
+
+    return uid, token
+
 def main():
     '''
     コマンドラインからの実行開始点

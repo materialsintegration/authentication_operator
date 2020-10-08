@@ -64,3 +64,18 @@ password : パスワード
 (True, '500000100000001', '13bedfd69583faa62be240fcbcd0c0c0b542bc92e1352070f150f8a309f441ed')
 ```
 
+## 便利な関数
+* ログインプロンプトの表示
+  + 実行
+    ```
+    uid, token = openam_operator.miLogin("dev-u-tokyo.mintsys.jp", "記述子を取得する側(dev-u-tokyo.mintsys.jp)のログイン情報入力")
+    ```
+  + 表示
+    ```
+    記述子を取得する側(dev-u-tokyo.mintsys.jp)のログイン情報入力
+    ログインID: utadmin01
+    パスワード: xxxxx（入力は表示されない）
+    ```
+  + 戻り値
+    - ログインに成功すれば、該当ユーザーのユーザーIDとAPIトークンのタプルが返る。
+    - 失敗した場合は、None, Noneとなっているタプルが返る。
