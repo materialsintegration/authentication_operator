@@ -18,6 +18,9 @@ import requests
 import urllib
 import subprocess
 import base64
+import ast
+import xml.etree.ElementTree as ET
+from html.parser import HTMLParser
 from getpass import getpass
 if sys.version_info[0] <= 2:
     import ConfigParser
@@ -144,10 +147,11 @@ def openam_getcode(server, token, realm="misystem", debug=0):
     #        "nonce":"ZZZZZZ", "state":"ZZZZZZ"}
 
     #data = urlparse("response_type=id_token token&scope=openid&client_id=sipauthApp&redirect_uri=https://%s&save_consent=1&decision=Allow&nonce=ZZZZZZZ&state=ZZZZZZ"%server)
-    data = urlparse("response_type=code&scope=openid profile qualified email&client_id=sipauthApp&redirect_uri=https://%s&save_consent=1&decision=Allow&nonce=ZZZZZZZ&state=ZZZZZZ"%server)
+    #data = urlparse("response_type=code&scope=openid profile qualified email&client_id=sipauthApp&redirect_uri=https://%s&save_consent=1&decision=Allow&nonce=ZZZZZZZ&state=ZZZZZZ"%server)
+    data = urlparse("realm=/misystem&response_type=code&scope=openid profile qualified email&client_id=sipauthApp&redirect_uri=https://%s&decision=allow&csrf=%s"%(server, token))
 
     #weburl = "https://%s/sso/oauth2/authorize?realm=%s"%(server, realm)
-    weburl = "https://%s/sso/oauth2/%s/authorize?%s"%(server, realm, data.geturl())
+    weburl = "https://%s/sso/oauth2/authorize?%s"%(server, data.geturl())
     #weburl = "https://%s/sso/oauth2/%s/authorize"%(server, realm)
 
     # simulate this function by curl command for debug
@@ -158,7 +162,7 @@ def openam_getcode(server, token, realm="misystem", debug=0):
         print('  -H "Content-Type:%s" \\'%(headers["Content-Type"]))
         print('  -H "Cache-Control: %s" \\'%(headers["Cache-Control"]))
         print("  -d '%s' \\"%data.geturl().replace(" ", "%20"))
-        print("  -k -v https://%s/sso/oauth2/%s/authorize"%(server, realm))
+        print("  -k -v https://%s/sso/oauth2/authorize"%(server))
 
     #ret, result = openam_post(weburl, json=jdata, headers=headers)
     ret, result = openam_post(weburl, payload=None, headers=headers)
@@ -166,15 +170,27 @@ def openam_getcode(server, token, realm="misystem", debug=0):
         debug_print(result, debug)
         return ret, result.text
 
+    items = urlunquote(result.url).split('&')
+    code = None
     if debug >= 1:
         print("url = %s"%result.url)
+        #for item in vars(result):
+        #    print("%s = %s"%(item, vars(result)[item]))
+        for item in items:
+            print(item)
     #items = urllib.unquote(result.url).split('&')
-    items = urlunquote(result.url).split('&')
-    item = items[2].split("code=")[1]
+    for item in items:
+        if item.startswith("code") is True:
+            code = item.split("=")[1]
+        if item.startswith("goto") is True:
+            subitem = item.split("?")[1]
+            if subitem.startswith("code") is True:
+                code = subitem.split("=")[1]
+    #item = items[2].split("code=")[1]
     if debug >= 1:
-        print("code is %s"%item)
+        print("code is %s"%code)
 
-    return True, item
+    return True, code
 
 def openam_getaccess_token(server, code, realm="misystem", debug=0):
     '''
@@ -196,10 +212,11 @@ def openam_getaccess_token(server, code, realm="misystem", debug=0):
              'code':'%s'%code,
              'redirect_uri':'https://%s'%server}
 
-    data = urlparse("grant_type=authorization_code&code=%s&redirect_uri=https://%s"%(code, server))
+    data = urlparse("realm=/misystem&grant_type=authorization_code&code=%s&redirect_uri=https://%s"%(code, server))
 
     #weburl = "https://%s/sso/oauth2/%s/access_token"%(server, realm)
-    weburl = "https://%s/sso/oauth2/%s/access_token?%s"%(server, realm, data.geturl())
+    #weburl = "https://%s/sso/oauth2/%s/access_token?%s"%(server, realm, data.geturl())
+    weburl = "https://%s/sso/oauth2/access_token?%s"%(server, data.geturl())
 
     # simulate this function by curl command for debug
     if debug >= 2:
@@ -238,7 +255,8 @@ def openam_get_userinfo(server, access_token, realm="misystem", debug=0):
         print("------ getting user informations ------")
     headers = {"Authorization":"Bearer %s"%access_token}
 
-    weburl = "https://%s/sso/oauth2/%s/userinfo"%(server, realm)
+    #weburl = "https://%s/sso/oauth2/%s/userinfo"%(server, realm)
+    weburl = "https://%s/sso/oauth2/userinfo?realm=%s"%(server, realm)
     #weburl = "https://%s/sso/oauth2/userinfo"%(server)
 
     # simulate this function by curl command for debug
@@ -247,7 +265,7 @@ def openam_get_userinfo(server, access_token, realm="misystem", debug=0):
         print("curl -X POST \\")
         print('  -H "Authorization: %s" \\'%(headers["Authorization"]))
         print("  -d 'claims=mi-api-token&scope=mi-api-token' \\")
-        print("  -k -v https://%s/sso/oauth2/%s/userinfo"%(server, realm))
+        print("  -k -v https://%s/sso/oauth2/userinfo?realm=%s"%(server, realm))
 
     ret, result = openam_get(weburl, payload={"claims":"mi-api-token"}, headers=headers)
     if ret is False:
@@ -260,6 +278,79 @@ def openam_get_userinfo(server, access_token, realm="misystem", debug=0):
 
             print("}")
         return ret, result.json()
+
+def openam_getinfo(server, token, realm="misystem", debug=0):
+    '''
+    serverの指す認証システムへ取得したtokenで得られる情報を得る。（GET Method使用）
+    20210519:Y.Manaka openam_getcodeがOpenAM14のOAuth2でうまく動かなかったので、こちらで代用で作り始めたが
+                      うまく動くようになったので、開発は途中まで。
+                    　動作は、GETで取得したHTMLからmi-user-idとmi-api-tokenを抜き出す。
+    @param server(string):
+    @param token(string)
+    @retval bool, code(string) : Falseの場合はbody
+    '''
+
+    if debug >= 1:
+        print("------ getting code ------")
+    headers = {"Cookie":"iPlanetDirectoryPro=%s"%token,
+               "Content-Type": "application/x-www-form-urlencoded",
+    #headers = {"Authorization":"Basic %s"%token,
+    #           "Content-Type": "application/json",
+               "Cache-Control": "no-cache"}
+
+    jdata = {"response_type":"id_token",
+            "scope":"openid profile mi-user-id Mi-User-Id qualified email",
+            "client_id":"sipauthApp",
+            "redirect_uri":"https://%s"%server,
+            "save_consent":"1",
+            "decision":"Allow"}
+    #        "nonce":"ZZZZZZ", "state":"ZZZZZZ"}
+
+    #data = urlparse("response_type=id_token token&scope=openid&client_id=sipauthApp&redirect_uri=https://%s&save_consent=1&decision=Allow&nonce=ZZZZZZZ&state=ZZZZZZ"%server)
+    #data = urlparse("response_type=code&scope=openid profile qualified email&client_id=sipauthApp&redirect_uri=https://%s&save_consent=1&decision=Allow&nonce=ZZZZZZZ&state=ZZZZZZ"%server)
+    data = urlparse("realm=/%s&response_type=code&scope=openid profile qualified email&client_id=sipauthApp&redirect_uri=https://%s&save_consent=1&decision=Allow&nonce=ZZZZZZZ&state=ZZZZZZ"%(realm, server))
+
+    weburl = "https://%s/sso/oauth2/authorize?%s"%(server, data.geturl())
+    #weburl = "https://%s/sso/oauth2/%s/authorize?%s"%(server, realm, data.geturl())
+
+    # simulate this function by curl command for debug
+    if debug >= 2:
+        print("curl command")
+        #print("curl -X POST \\")
+        print("curl -X GET \\")
+        print('  -H "Cookie:%s" \\'%(headers["Cookie"]))
+        #print('  -H "Authorization:%s" \\'%(headers["Authorization"]))
+        print('  -H "Content-Type:%s" \\'%(headers["Content-Type"]))
+        print('  -H "Cache-Control: %s" \\'%(headers["Cache-Control"]))
+        print("  -d '%s' \\"%data.geturl().replace(" ", "%20"))
+        #print("  -k -v https://%s/sso/oauth2/%s/authorize"%(server, realm))
+        print("  -k -v https://%s/sso/oauth2/authorize"%server)
+
+    #ret, result = openam_post(weburl, json=jdata, headers=headers)
+    #ret, result = openam_post(weburl, payload=None, headers=headers)
+    ret, result = openam_get(weburl, payload=None, headers=headers)
+    if ret is False:
+        debug_print(result, debug)
+        return ret, result.text
+
+    if debug >= 1:
+        for item in vars(result):
+            print("%s = %s"%(item, vars(result)[item]))
+    content = result.content.decode("utf-8").replace("\n", "").strip()
+    print(content)
+    parser = HTMLParser()
+    parser.feed(content)
+    print(parser.handle_data("script"))
+    #items = urllib.unquote(result.url).split('&')
+    #items = urlunquote(result.url).split('&')
+    #if debug >= 1:
+    #    for item in items:
+    #        print(item)
+    #item = items[2].split("code=")[1]
+    if debug >= 1:
+        print("code is %s"%item)
+
+    return True, item
 
 def miauth(server, user_name, user_passwd, debug=0):
     '''
