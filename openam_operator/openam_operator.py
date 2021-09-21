@@ -30,6 +30,10 @@ else:
     import configparser
     from urllib.parse import urlparse, quote as urlquote, unquote as urlunquote
 
+# OpenAM認証用クッキーの名前
+#OPENAM_COOKIE_NAME="iPlanetDirectoryPro"
+OPENAM_COOKIE_NAME="micookie"
+
 def debug_print(result, debugLevel=0):
     '''
     request.SessionのResponseオブジェクトの中身を1次分解して表示する。
@@ -134,7 +138,7 @@ def openam_getcode(server, token, realm="misystem", debug=0):
 
     if debug >= 1:
         print("------ getting code ------")
-    headers = {"Cookie":"iPlanetDirectoryPro=%s"%token,
+    headers = {"Cookie":"%s=%s"%(OPENAM_COOKIE_NAME, token),
                "Content-Type": "application/x-www-form-urlencoded",
                "Cache-Control": "no-cache"}
 
@@ -292,7 +296,7 @@ def openam_getinfo(server, token, realm="misystem", debug=0):
 
     if debug >= 1:
         print("------ getting code ------")
-    headers = {"Cookie":"iPlanetDirectoryPro=%s"%token,
+    headers = {"Cookie":"%s=%s"%(OPENAM_COOKIE_NAME, token),
                "Content-Type": "application/x-www-form-urlencoded",
     #headers = {"Authorization":"Basic %s"%token,
     #           "Content-Type": "application/json",

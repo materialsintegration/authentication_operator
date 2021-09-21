@@ -4,5 +4,5 @@
 # in whole or in part, without the express written permission of
 # the copyright owners.
 __author__ = "Yusuke Manaka"
-__version__ = "1.2.0"
-__date__ = "20210528"
+__version__ = "1.3.0"
+__date__ = "20210921"
