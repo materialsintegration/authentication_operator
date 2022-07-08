@@ -63,9 +63,12 @@ def openam_post(resturl, payload=None, headers=None, debug=0):
 
     session = requests.Session()
     
-    result = session.post(resturl, json=payload, headers=headers)
+    result = session.post(resturl, data=payload, headers=headers)
 
     #print("response of post = %s"%result.text)
+    #if debug != 0:
+    #    print("----------- openam_post() ----------------")
+    #    debug_print(result, debug)
 
     if result.status_code != 200:
         debug_print(result, debug)
@@ -110,14 +113,57 @@ def openam_authenticate(server, user_name, user_password, realm="misystem", debu
     if server == "" or server is None:
         return False, "no server name or invalid server name"
 
+    if debug >= 2:
+        print("curl command")
+        print("curl -X POST \\")
+        print('  -H "X-OpenAM-Username: %s"\\'%user_name)
+        print('  -H "X-OpenAM-Password: %s"\\'%user_password)
+        print('  -H "Content-Type: application/json"\\')
+        print("  -d ''\\")
+        print("  -k -v https://%s/sso/json/authenticate?realm=%s"%(server, realm))
+
     headers = {"X-OpenAM-Username": user_name,
                "X-OpenAM-Password": user_password,
+               "Accept-API-Version": "resource=2.0, protocol=1.0",
                "Content-Type": "application/json"}
+    #headers = {"Accept-API-Version": "resource=2.0, protocol=1.0",
+    #           "Content-Type": "application/json"}
+    #headers = {"Content-Type": "application/json"}
 
     weburl = "https://%s/sso/json/authenticate?realm=%s"%(server, realm)
+    if debug >= 1:
+        print("url : %s"%weburl)
 
-    ret, result = openam_post(weburl, payload=None, headers=headers)
+    ret, result = openam_post(weburl, payload=None, headers=headers, debug=debug)
 
+    # 20220707 OpenAM15になって面倒くさいコールバックが必要になったため、14までとの差を確認する
+    if ret is True:
+        if ("tokenId" in result.json()) is True:
+            return True, result
+
+    # OpenAM15は以下のコールバックでtokenIdを得る
+    if debug >= 1:
+        response = result.json()
+        print("Response = {")
+        for item in response:
+            print("    key = %s / value = %s"%(item, response[item]))
+        print("}")
+        print("\n第一段階\n")
+    data = result.json()
+    for item in data["callbacks"]:
+        if item["type"] == "NameCallback":
+            item["input"][0]["value"] = user_name
+        elif item["type"] == "PasswordCallback":
+            item["input"][0]["value"] = user_password
+
+    if debug >= 2:
+        print("\ncurl command")
+        sys.stdout.write('curl -X POST -H "Accept-API-Version: resource=2.0, protocol=1.0" -H "Content-Type: application/json" ')
+        sys.stdout.write("-d '%s' -k -v https://%s/sso/json/authenticate?realm=%s\n\n"%(json.dumps(data), server, realm))
+        print("--------------------コールバック用データ--------------------")
+        print(data)
+
+    ret, result = openam_post(weburl, payload=json.dumps(data), headers=headers, debug=debug)
     if ret is True:
         if debug >= 1:
             response = result.json()
@@ -373,8 +419,22 @@ def miauth(server, user_name, user_passwd, debug=0):
 
     if debug >= 1:
         print("認証OK")
+
     # code取得
-    token = result.json()["tokenId"]
+    #if ("tokenId" in result.json()) is False:
+    #    print("code取得失敗")
+    #    print("返却ステータス：%s"%ret)
+    #    return False, result, None
+
+    if ("tokenId" in result.json()) is True:
+        token = result.json()["tokenId"]
+    #elif ("authId" in result.json()) is True:
+    #    token = result.json()["authId"]
+    else:
+        print("code取得失敗")
+        print("返却ステータス：%s"%ret)
+        return False, result, None
+        
     ret, result = openam_getcode(server, token, debug=debug)
     if ret is False:
         return False, result, None
